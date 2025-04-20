@@ -4,13 +4,13 @@
 
 The RX2 import is a port from Esaruoho' Paketti (<https://github.com/esaruoho/paketti>)
 
-The change I made is that it behaves closer to Renoise original import behavior: aka if
+The change the behavior so it behaves closer to Renoise original import : ie. if
 you double-click an importable file, it'll overwrite current instrument, and won't load any
 macro or default.
 
-If you use/like it a lot, you owe him money : <patreon.com/esaruoho> (if you can)
+If you use/like it a lot, you owe him money : <https://patreon.com/esaruoho> (if you can)
 
-The Akai import iterates from legacy (and kinda broken) Mxb tool
+The AKAI import iterates from legacy (and kinda broken) Mxb tool
 <https://www.renoise.com/tools/additional-file-format-import-support>
 
 I changed few things so it can deal with stereo files, and behaves better with program
@@ -18,7 +18,7 @@ I changed few things so it can deal with stereo files, and behaves better with p
 ## AKAI
 
 - If you're dealing with programs spanning drum-loop (or non-tonal stuffs, noise, spoken voice...)
-across keys, you'll want to disable the `"Key->Pitch"` setting at the bottom of the "Keyzone" tab.
+across keys, you'll want to disable the `"Key->Pitch"` setting at the bottom of the "keyzone" tab.
 - The whole things expect upper-case file names
 
 ## AKAI Ripping
