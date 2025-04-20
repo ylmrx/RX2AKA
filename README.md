@@ -18,8 +18,12 @@ I changed few things so it can deal with stereo files, and behaves better with p
 ## AKAI
 
 - If you're dealing with programs spanning drum-loop (or non-tonal stuffs, noise, spoken voice...)
-across keys, you'll want to disable the `"Key->Pitch"` setting at the bottom of the "keyzone" tab.
+across keys:
+   - select all sample (square selection in the `keyzone` tab)
+   - click: `"Key->Pitch"` setting at the bottom.
+   - maybe tweak the bass note
 - The whole things expect upper-case file names
+- Many programs are kinda broken (ie. reference files that don't exist... if you report issues share the faulty file)
 
 ## AKAI Ripping
 
