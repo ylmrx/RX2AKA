@@ -42,7 +42,6 @@ function s1000_loadsample(filename)
     end
   end
   song.selected_instrument:clear()
-  print(#song.selected_instrument.samples)
   if filename:match("-L.S%d*$") then
     load_it(filename:gsub("-L(.S%d*)$", "-R%1"),  1)
     load_it(filename,  0)
