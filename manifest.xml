@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RenoiseScriptingTool doc_version="0">
-  <Name>RX2</Name>
-  <Id>com.yla.RX2</Id>
+  <Name>RX2AKA</Name>
+  <Id>com.ylmrx.RX2AKA</Id>
   <Version>0.1</Version>
   <ApiVersion>6</ApiVersion>
-  <Author>esaruoho/yla</Author>
+  <Author>esaruoho/mxb/ylmrx</Author>
   <AutoUpgraded>false</AutoUpgraded>
   <Category>file</Category>
-  <Description>rex2 importer from paketti</Description>
-  <Homepage>http://www.lackluster.org/</Homepage>
+  <Description>rex2 importer from paketti, and AKAI sounds/programs</Description>
+  <Homepage>https://soundcloud.com/xoxopowo/</Homepage>
   <Platform/>
   <Icon/>
 </RenoiseScriptingTool>
