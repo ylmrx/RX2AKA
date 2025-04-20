@@ -195,13 +195,17 @@ function get_samples_path(instrument_name, instrument_path, sample_filename)
   elseif io.exists("/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/" .. sample_filename) == true then  -- added v1.1
     return "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/"
   else
-  --[[
+    return nil
+    --[[
     if os.getenv("HOME") ~= nil then
       if io.exists(os.getenv("HOME") .. "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/" .. sample_filename) == true then  -- added v1.1
         return os.getenv("HOME") .. "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/"
       end
-    else]]--
-      return renoise.app():prompt_for_path("Location of samples for patch: " .. instrument_name)
+    else
+    
+      -- return renoise.app():prompt_for_path("Location of samples for patch: " .. instrument_name)
+
  --   end
+ ]]--
   end
 end

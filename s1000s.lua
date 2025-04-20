@@ -4,7 +4,7 @@ function s1000_get_basenote_from_sample(filename)
   -- extract the base note from the supplied .s format sample
   -- used for s1000 .p program loading
   local d = "" -- in memory copy
-  lsb_first = true
+  local lsb_first = true
 
   local f_in = io.open(filename, "rb")
   if f_in == nil then
@@ -32,19 +32,6 @@ function s1000_get_basenote_from_sample(filename)
 end
 
 function s1000_loadsample(filename)
-  local d = ""
-  local aiff_file
-  local loop_start = 0
-  local loop_end = 0
-  local sample_name = ""
-  local sample_rate = 0
-  local fine_tune = 0
-  local transpose = 0
-  local active_loop_count = 0
-  local t -- temp
-
-  -- Set endianness
-  local lsb_first = true
 
   renoise.app():show_status("Importing Akai S1000/S3000 Sample...")
   local song = renoise.song()
@@ -55,26 +42,46 @@ function s1000_loadsample(filename)
     end
   end
   song.selected_instrument:clear()
-  song.selected_instrument:insert_sample_at(1)
-  if filename:match("-[Ll].[sS]%d*$") then
-    print("hello LEFTY")
+  print(#song.selected_instrument.samples)
+  if filename:match("-L.S%d*$") then
+    load_it(filename:gsub("-L(.S%d*)$", "-R%1"),  1)
+    load_it(filename,  0)
+  elseif filename:match("-R.S%d*$") then
+    load_it(filename,  1)
+    load_it(filename:gsub("-R(.S%d*)$", "-L%1"),  0)
+  else
+    load_it(filename,  0.5)
   end
-  -- if the file name has a suffix (-L, -R), import its twin too
-  -- pan accordingly... so you get a stereo instrument
+  return true
+end
+
+function load_it(fname, pan)
+  local aiff_file
+  local loop_start = 0
+  local loop_end = 0
+  local sample_name = ""
+  local sample_rate = 0
+  local fine_tune = 0
+  local transpose = 0
+  local active_loop_count = 0
+
+  local lsb_first = true
+
+  local song = renoise.song()
+  song.selected_instrument:insert_sample_at(1)
   local smp = renoise.song().selected_sample
-  -- local s_filename_clean = filename:match("[^/\\]+$") or "Akai Sample"
-  -- local instrument_name = s_filename_clean:gsub("%.s$", "")
-  local s_basename = filename:match("([^/\\]+)$") or "Akai Sample"
+
+  local s_basename = fname:match("([^/\\]+)$") or "Akai Sample"
   renoise.song().selected_instrument.name = s_basename
   renoise.song().selected_sample.name = s_basename
 
-  local f_in = io.open(filename, "rb")
+  local f_in = io.open(fname, "rb")
   if f_in == nil then
-    renoise.app():show_status("Couldn't open sample file: " .. filename .. ".")
+    renoise.app():show_status("Couldn't open sample file: " .. fname .. ".")
     return false
   end
   f_in:seek("set")
-  d = f_in:read("*a")
+  local d = f_in:read("*a")
   f_in:close()
   if read_byte_from_memory(d, 1) ~= 3 then
     print("s1000_loadsample: invalid file (byte1)")
@@ -91,7 +98,6 @@ function s1000_loadsample(filename)
   transpose = byte_to_twos_compliment(read_byte_from_memory(d, 22))
   active_loop_count = read_byte_from_memory(d, 17)
 
-  print("s1000 loaded sample:", filename)
   print("s1000_loadsample: sample_name", sample_name)
   print("s1000_loadsample: sample_rate", sample_rate)
   print("s1000_loadsample: fine_tune", fine_tune)
@@ -115,6 +121,7 @@ function s1000_loadsample(filename)
   smp.fine_tune = fine_tune
   smp.transpose = transpose
   smp.name = sample_name
+  smp.panning = pan
 
   -- set looping
   if active_loop_count ~= 0 then
@@ -124,13 +131,13 @@ function s1000_loadsample(filename)
     -- validate
     if loop_start < 0 then
       loop_start = 0
-    elseif loop_start > renoise.song().selected_sample.sample_buffer.number_of_frames then
-      loop_start = renoise.song().selected_sample.sample_buffer.number_of_frames
+    elseif loop_start > smp.sample_buffer.number_of_frames then
+      loop_start = smp.sample_buffer.number_of_frames
     end
     if loop_end < 0 then
       loop_end = 0
-    elseif loop_end > renoise.song().selected_sample.sample_buffer.number_of_frames then
-      loop_end = renoise.song().selected_sample.sample_buffer.number_of_frames
+    elseif loop_end > smp.sample_buffer.number_of_frames then
+      loop_end = smp.sample_buffer.number_of_frames
     end
 
     print("s1000_loadsample: loop_start", loop_start)
@@ -140,6 +147,5 @@ function s1000_loadsample(filename)
     smp.loop_start = loop_start
     smp.loop_end = loop_end
   end
-  d = ""
   return true
 end

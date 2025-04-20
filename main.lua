@@ -2,7 +2,7 @@
 ---@diagnostic disable: lowercase-global
 
 require("utils")
--- require("s1000p")
+require("s1000p")
 require("s1000s")
 
 
@@ -185,11 +185,11 @@ end
 --   return true
 -- end
 
--- p_integration = {
---   category = "instrument",
---   extensions = { "p", "P1", "P3" },
---   invoke = s1000_loadinstrument
--- }
+p_integration = {
+  category = "instrument",
+  extensions = { "p", "P1", "P3" },
+  invoke = s1000_loadinstrument
+}
 
 local s_integration = {
   category = "sample",
@@ -210,6 +210,6 @@ if renoise.tool():has_file_import_hook("sample", {"s", "S1", "S3"}) == false the
   renoise.tool():add_file_import_hook(s_integration)
 end
 
--- if renoise.tool():has_file_import_hook("instrument", {"p", "P1", "P3"}) == false then
---   renoise.tool():add_file_import_hook(p_integration)
--- end
+if renoise.tool():has_file_import_hook("instrument", {"p", "P1", "P3"}) == false then
+  renoise.tool():add_file_import_hook(p_integration)
+end
