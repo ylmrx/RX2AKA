@@ -32,7 +32,6 @@ function s1000_get_basenote_from_sample(filename)
 end
 
 function s1000_loadsample(filename)
-
   renoise.app():show_status("Importing Akai S1000/S3000 Sample...")
   local song = renoise.song()
   if not #song.selected_instrument.samples == 0 then
@@ -43,15 +42,130 @@ function s1000_loadsample(filename)
   end
   song.selected_instrument:clear()
   if filename:match("-L.S%d*$") then
-    load_it(filename:gsub("-L(.S%d*)$", "-R%1"),  1)
-    load_it(filename,  0)
+    load_it_stereo(filename, filename:gsub("-L(.S%d*)$", "-R%1"))
   elseif filename:match("-R.S%d*$") then
-    load_it(filename,  1)
-    load_it(filename:gsub("-R(.S%d*)$", "-L%1"),  0)
+    load_it_stereo(filename:gsub("-R(.S%d*)$", "-L%1"), filename)
   else
     load_it(filename,  0.5)
   end
   return true
+end
+
+function load_it_stereo(fname_left, fname_right)
+  local aiff_file
+  local loop_start = 0
+  local loop_end = 0
+  local sample_name = ""
+  local sample_rate = 0
+  local fine_tune = 0
+  local transpose = 0
+  local active_loop_count = 0
+
+  local lsb_first = true
+
+  local song = renoise.song()
+  song.selected_instrument:insert_sample_at(1)
+  local smp = song.selected_sample
+  local s_basename = fname_left:match("([^/\\]+)$") or "Akai Sample"
+  song.selected_instrument.name = s_basename:gsub("-[LR].S%d*$","")
+  -- smp.name = s_basename:gsub("-[LR].S%d*$","")
+  print(s_basename)
+
+  local left_f_in = io.open(fname_left, "rb")
+  local right_f_in = io.open(fname_right, "rb")
+  if left_f_in == nil then
+    renoise.app():show_status("Couldn't open sample file: " .. left_f_in .. ".")
+    return false
+  end
+  if right_f_in == nil then
+    renoise.app():show_status("Couldn't open sample file: " .. right_f_in .. ".")
+    return false
+  end
+  left_f_in:seek("set")
+  right_f_in:seek("set")
+  local ld = left_f_in:read("*a")
+  local rd = right_f_in:read("*a")
+  left_f_in:close()
+  right_f_in:close()
+  if read_byte_from_memory(ld, 1) ~= 3 then
+    print("s1000_loadsample: invalid file (byte1)")
+    ld = ""
+    return false
+  elseif read_byte_from_memory(ld, 16) ~= 128 then
+    print("s1000_loadsample: invalid file (byte16)")
+    ld = ""
+    return false
+  end
+  if read_byte_from_memory(rd, 1) ~= 3 then
+    print("s1000_loadsample: invalid file (byte1)")
+    rd = ""
+    return false
+  elseif read_byte_from_memory(rd, 16) ~= 128 then
+    print("s1000_loadsample: invalid file (byte16)")
+    rd = ""
+    return false
+  end
+  -- we assume right and left metas are identical....
+  sample_name = akaii_to_ascii(ld:sub(4,15))
+  sample_rate = read_word_from_memory(ld, 139, lsb_first)
+  fine_tune = byte_to_twos_compliment(read_byte_from_memory(ld, 21))
+  transpose = byte_to_twos_compliment(read_byte_from_memory(ld, 22))
+  active_loop_count = read_byte_from_memory(ld, 17)
+
+  print("s1000_loadsample: sample_name", sample_name)
+  print("s1000_loadsample: sample_rate", sample_rate)
+  print("s1000_loadsample: fine_tune", fine_tune)
+  print("s1000_loadsample: transpose", transpose)
+  print("s1000_loadsample: active_loop_count", active_loop_count)
+
+  aiff_file = merge_generate_aiff(sample_rate, 16, ld:sub(150), rd:sub(150))
+  if smp.sample_buffer.has_sample_data == true then
+    if smp.sample_buffer.read_only == true then
+      ld = ""
+      rd = ""
+      return false
+    end
+  end
+  smp:clear()
+---@diagnostic disable-next-line: param-type-mismatch
+  if smp.sample_buffer:load_from(aiff_file) == false then
+    ld = ""
+    rd = ""
+    return false
+  end
+
+  smp.fine_tune = fine_tune
+  smp.transpose = transpose
+  smp.name = sample_name:upper():gsub("-[LR]$","")
+  smp.panning = 0.5
+  -- single chans are fullscale, reduce stereo volume...
+  -- smp.volume = math.db2lin(-3)
+
+  -- set looping
+  if active_loop_count ~= 0 then
+    -- use loop 1
+    loop_start = read_dword_from_memory(ld, 39, lsb_first)
+    loop_end = loop_start + read_dword_from_memory(ld, 45, lsb_first)
+    -- validate
+    if loop_start <= 0 then
+      loop_start = 1
+    elseif loop_start > smp.sample_buffer.number_of_frames then
+      loop_start = smp.sample_buffer.number_of_frames
+    end
+    if loop_end <= 0 then
+      loop_end = 1
+    elseif loop_end > smp.sample_buffer.number_of_frames then
+      loop_end = smp.sample_buffer.number_of_frames
+    end
+
+    print("s1000_loadsample: loop_start", loop_start)
+    print("s1000_loadsample: loop_end", loop_end)
+    -- loop location are often faulty... set to no loop to let user decide
+    smp.loop_start = loop_start
+    smp.loop_end = loop_end
+  end
+  return true
+
 end
 
 function load_it(fname, pan)
@@ -128,13 +242,13 @@ function load_it(fname, pan)
     loop_start = read_dword_from_memory(d, 39, lsb_first)
     loop_end = loop_start + read_dword_from_memory(d, 45, lsb_first)
     -- validate
-    if loop_start < 0 then
-      loop_start = 0
+    if loop_start <= 0 then
+      loop_start = 1
     elseif loop_start > smp.sample_buffer.number_of_frames then
       loop_start = smp.sample_buffer.number_of_frames
     end
-    if loop_end < 0 then
-      loop_end = 0
+    if loop_end <= 0 then
+      loop_end = 1
     elseif loop_end > smp.sample_buffer.number_of_frames then
       loop_end = smp.sample_buffer.number_of_frames
     end

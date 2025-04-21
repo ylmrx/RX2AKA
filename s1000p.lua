@@ -137,9 +137,11 @@ function setup_slot(instrument, sample, sample_path)
   end
   s.fine_tune = t
   -- volume
-  s.volume = math.db2lin(-3)
+  -- we usually get stereo slices, take their volume down
+  -- s.volume = math.db2lin(-3)
   -- create sample mapping
   local base_note = s1000_get_basenote_from_sample(sample_path .. sample[1])
+  s.sample_mapping.map_key_to_pitch = true
   if base_note ~= nil then
     s.sample_mapping.base_note = base_note - 12
   else
@@ -176,20 +178,18 @@ function s1000_loadinstrument_samples(instrument, sample_path, samples)
     else
 
       if samples[i][1]:match("-L.S%d*$") then
-        if load_it(sample_path..samples[i][1], 0) == true then
+        local sample_right = samples[i] -- [1]:gsub("-L(.S%d*)$", "-R%1")
+        sample_right[1] = sample_right[1]:gsub("-L(.S%d*)$", "-R%1")
+        if load_it_stereo(sample_path..samples[i][1], sample_path..sample_right[1]) == true then
           setup_slot(instrument, samples[i], sample_path)
-        end
-        samples[i][1] = samples[i][1]:gsub("-L(.S%d*)$", "-R%1")
-        if load_it(sample_path..samples[i][1], 1) == true then
-          setup_slot(instrument, samples[i], sample_path)
+          setup_slot(instrument, sample_right, sample_path)
         end
       elseif samples[i][1]:match("-R.S%d*$") then
-        if load_it(sample_path..samples[i][1],  1) == true then
+        local sample_left = samples[i] -- [1]:gsub("-L(.S%d*)$", "-R%1")
+        sample_left[1] = sample_left[1]:gsub("-R(.S%d*)$", "-L%1")
+        if load_it_stereo(sample_path..samples[i][1], sample_path..sample_left[1]) == true then
           setup_slot(instrument, samples[i], sample_path)
-        end
-        samples[i][1] = samples[i][1]:gsub("-R(.S%d*)$", "-L%1")
-        if load_it(sample_path..samples[i][1],  0) == true then
-          setup_slot(instrument, samples[i], sample_path)
+          setup_slot(instrument, sample_left, sample_path)
         end
       else
         if load_it(sample_path .. samples[i][1], 0.5) == true then

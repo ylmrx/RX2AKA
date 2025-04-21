@@ -20,10 +20,13 @@ I changed few things so it can deal with stereo files, and behaves better with p
 - If you're dealing with programs spanning drum-loop (or non-tonal stuffs, noise, spoken voice...)
 across keys:
    - select all sample (square selection in the `keyzone` tab)
-   - click: `"Key->Pitch"` setting at the bottom.
+   - click: `"Key->Pitch"` setting at the bottom. (*)
    - maybe tweak the bass note
 - The whole things expect upper-case file names
 - Many programs are kinda broken (ie. reference files that don't exist... if you report issues share the faulty file)
+
+(*) If you use mostly non-tonals, you can change this behavior, by editing the script, in `s1000p.lua`, around line 144,
+change the value of `s.sample_mapping.map_key_to_pitch` to `false`, and save the file (`Ctrl+S`).
 
 ## AKAI Ripping
 
@@ -108,4 +111,15 @@ exporting "99.S1"
 > /disk0/A > cdi 2               # go to next volume
 ```
 
+## History
 
+### `0.1`
+
+- experimental first release
+
+### `0.2`
+
+- load `-L` or `-R` suffixed sounds as stereo samples
+- prettify sounds name (remove L/R suffixes, caps them)
+- fix (read: remove) bad pan laws (thanks to stereo merge): your sounds will be a bit louder
+- fix crash upon badly-written/missing loop cues

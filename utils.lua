@@ -54,6 +54,37 @@ function hex_pack(string)
   return raw_string
 end
 
+function merge_generate_aiff(samplerate, bit_depth, left_data, right_data)
+  local aiff_file = os.tmpname("aiff")
+  local frames = left_data:len() / (bit_depth / 16)
+  local length = left_data:len() + 27
+  print("generate_aiff: aiff_file=", aiff_file)
+  local f = io.open(aiff_file, "wb")
+  if f == nil then
+    return false
+  end
+  f:write("FORM")
+  f:write(hex_pack(string.format("%08X", length))) -- chunk size = file length - 8 
+  f:write("AIFF")
+  f:write("COMM") -- (4 bytes)
+  f:write(hex_pack("00000012")) -- chunk size = 18 bytes
+  f:write(string.char(00, 2))   -- channel count
+  f:write(hex_pack(string.format("%08X", frames))) -- sample frames
+  f:write(hex_pack(string.format("%04X", bit_depth))) -- bit depth)
+  f:write(hex_pack("400E" .. string.format("%04X", samplerate) .. "000000000000"))  -- sample rate as 10 bit float hack
+  f:write("SSND") -- (4 bytes)
+  f:write(hex_pack(string.format("%08X", left_data:len() + 16))) -- chunk size
+  f:write(hex_pack("00000000"))   -- offset
+  f:write(hex_pack("00000000"))   -- blocksize
+  -- local right_offset = frames * (bit_depth/8)
+  for i = 1, frames, (bit_depth / 8) do  -- interleaved audio
+    f:write(left_data:sub(i, i + (bit_depth/16))) --left
+    f:write(right_data:sub(i, i + (bit_depth/16))) --right
+  end
+  f:flush()
+  f:close()
+  return aiff_file
+end
 
 function generate_aiff(channels, samplerate, bit_depth, audiodata)
   -- writes a aiff file (to a Renoise temporary location) with the supplied data
@@ -196,16 +227,6 @@ function get_samples_path(instrument_name, instrument_path, sample_filename)
     return "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/"
   else
     return nil
-    --[[
-    if os.getenv("HOME") ~= nil then
-      if io.exists(os.getenv("HOME") .. "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/" .. sample_filename) == true then  -- added v1.1
-        return os.getenv("HOME") .. "/Library/Application Support/GarageBand/Instrument Library/Sampler/Sampler Files/" .. instrument_name .. "/"
-      end
-    else
-    
-      -- return renoise.app():prompt_for_path("Location of samples for patch: " .. instrument_name)
-
- --   end
- ]]--
+    -- return renoise.app():prompt_for_path("Location of samples for patch: " .. instrument_name)
   end
 end
