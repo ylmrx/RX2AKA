@@ -2,7 +2,7 @@
 <RenoiseScriptingTool doc_version="0">
   <Name>RX2AKA</Name>
   <Id>com.ylmrx.RX2AKA</Id>
-  <Version>0.1</Version>
+  <Version>0.3</Version>
   <ApiVersion>6</ApiVersion>
   <Author>esaruoho/mxb/ylmrx</Author>
   <AutoUpgraded>false</AutoUpgraded>

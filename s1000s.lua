@@ -145,7 +145,10 @@ function load_it_stereo(fname_left, fname_right)
   if active_loop_count ~= 0 then
     -- use loop 1
     loop_start = read_dword_from_memory(ld, 39, lsb_first)
-    loop_end = loop_start + read_dword_from_memory(ld, 45, lsb_first)
+    -- faulty loop ? not sure... advise if you know anything about akai specs...
+    -- loop_end = loop_start + read_dword_from_memory(ld, 45, lsb_first)
+    -- anyway Renoise won't crossfade "neatly" like the real thing ... use hears + pow fade tool
+    loop_end = read_dword_from_memory(ld, 45, lsb_first)
     -- validate
     if loop_start <= 0 then
       loop_start = 1

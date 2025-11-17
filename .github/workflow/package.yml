@@ -1,0 +1,47 @@
+name: Package RX2AKA
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build a RX2AKA xrnx package with latest code
+        run: |
+          PACKAGE_NAME=com.ylmrx.RX2AKA
+          CODE_PATH=${PACKAGE_NAME}.xrnx
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+          echo "TAG_NAME=$TIMESTAMP" >> $GITHUB_ENV
+          echo "FILENAME=${PACKAGE_NAME}_${TIMESTAMP}.xrnx" >> $GITHUB_ENV
+          echo "CODE_PATH=${CODE_PATH}" >> $GITHUB_ENV
+          
+      - name: Zip XRNX Package
+        run: |
+          cd "${{ env.CODE_PATH }}"
+          zip -r "${{ env.FILENAME }}" .
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false
+      
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.CODE_PATH }}/${{ env.FILENAME }}
+          asset_name: ${{ env.FILENAME }}
+          asset_content_type: application/octet-stream
